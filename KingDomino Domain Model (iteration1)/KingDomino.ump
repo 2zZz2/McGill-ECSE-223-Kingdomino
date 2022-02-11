@@ -1,0 +1,123 @@
+namespace ca.mcgill.ecse.kingdomino.model;
+
+class KingDomino{
+  1 <@>- * Game;
+  1 <@>- * User;
+  1 <@>- * Domino;
+}
+  
+class Tile {
+  enum LandscapeType{ Wheatfield, Lake, Forest, Grass, Mountain, Swamp, All };
+  LandscapeType landscape;
+  int numberOfCrowns;
+ }
+
+
+class Domino{
+  int angleOfRotation;
+  * -> 1..2 Tile tiles;
+}
+
+class RegularDomino
+{
+  isA Domino;
+  int id;
+  int randomOrder;
+}
+
+class CastleDomino
+{
+  isA Domino;
+  1 -- 1 King king;
+
+}
+
+class GridCell	{
+  int xCoordinate;
+  int yCoordinate;
+  * -> 1 Tile tile;
+}
+
+class King {
+  enum KingColor{Yeslow, Blue, Green, Pink};
+  KingColor kingColor;
+  1..2 -- 1 Player player;	//one king for each player when there are three or four players, two kings for two players
+
+}
+
+class Property {
+  LandscapeType landscape;
+  int landscapeSize;
+  int numberOfCrowns;
+  int score;
+  0..1 -> * GridCell;
+}
+
+class Grid {
+  Boolean endOfRound;
+  Boolean hasDiscarded;	
+  Boolean castleCentered; 
+  int totalScore;
+  1 <@>- 0..25 GridCell;
+  1 <@>- * Property properties; 
+  1 -- 1..2 King kings;	
+}
+
+class DominoPlacement {
+  * -> 1 Grid;
+  * -> 1 RegularDomino;
+  * -> 2 Tile;
+  * -> 2 GridCell;
+  * -> 1 King;
+  Boolean isValid;
+  int tempPositionX1;
+  int tempPositionY1;
+  int tempPositionX2;
+  int tempPositionY2;
+}
+
+class User {
+  unique String name;
+  boolean lastGameFinished;
+  int numberOfGamesWon;
+  int numberOfGamesLost;
+  int numberOfGamesDrew;
+  int numberOfGamesPlayed;
+  float winningRate;
+  2..4 -- 0..1 Game unfinishedGame;
+  1 -- * Player;
+}
+
+class Turn {
+  
+  int orderOfTurns; 
+  * -> 3..4 RegularDomino dominoInLine;
+  * -> 3..4 King kingInLine;
+  * -> 1 King currentKing;
+  0..1 currentTurn -> 0..1 Turn nextTurn;
+  0..1 <@>- 3..4 DominoPlacement;             
+}										
+
+class Round {
+  Boolean endOfRound;
+  1 <@>- 6..12 Turn;
+  0..1 -> 24..48 RegularDomino shuffledDominos;		
+  1 <@>- 2..4 Grid grids;
+}
+
+
+class Game {
+  Boolean endOfGame;
+  1 <@>- 3..4 King;				
+  1 <@>- 1..3 Round;			
+  1 <@>- 2..4 Player;			
+  
+}
+
+class Player {
+  enum GameResultType{Won, Lost, Drew};
+  int finalScore;
+  Date finishedDate;
+  GameResultType gameResult;
+}
+
