@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="main/java"/>
+	<classpathentry kind="src" path="test/java"/>
+	<classpathentry kind="lib" path="C:/Users/ostap/.gradle/caches/modules-2/files-2.1/io.cucumber/cucumber-java/4.7.2/79c76767a3a8754b0ef110aadb6491933e675bd/cucumber-java-4.7.2.jar" sourcepath="C:/Users/ostap/.gradle/caches/modules-2/files-2.1/io.cucumber/cucumber-java/4.7.2/9e1387ef0d873f27aa9373812a107708e6be760/cucumber-java-4.7.2-sources.jar">
+		<attributes>
+			<attribute name="gradle_used_by_scope" value="test"/>
+			<attribute name="test" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

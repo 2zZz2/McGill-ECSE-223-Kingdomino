@@ -1,0 +1,280 @@
+namespace ca.mcgill.ecse223.kingdomino.model;
+
+class Gameplay {
+	
+    gamestatus { 
+        Initializing {
+            CreatingFirstDraft {
+                entry/{shuffleDominoPile();generateInitialPlayerOrder();} -> Initializing.SelectingFirstDomino;
+            }
+            SelectingFirstDomino {
+            	selectedFirst[!isSelectionValid()]->Initializing.SelectingFirstDomino;
+            	selectedFirst[!isCurrentPlayerTheLastInTurn()] ->/{setNextPlayer();} Initializing.SelectingFirstDomino;
+            	selectedFirst[isCurrentPlayerTheLastInTurn()] -> Ongoing.CreatingNextDraft;
+            }
+        }
+        Ongoing{
+       		CreatingNextDraft{
+        		entry/{createNextDraft(); orderNextDraft();generateNextPlayerOrder();revealNextDraft();} -> Ongoing.PreplacingDomino;
+        	}
+        	
+        	PreplacingDomino{
+        		preplaced[isThereAValidPlacement()]-> Ongoing.PlacingDomino;
+        		preplaced[!isThereAValidPlacement()] -> Ongoing.DiscardingDomino;
+        	}
+ 			PlacingDomino{
+        		placed[isCurrentTurnTheLastInGame()&&isCurrentPlayerTheLastInTurn()] -> /{} Over;
+        		placed[!isCurrentTurnTheLastInGame()] -> /{} Ongoing.SelectingDomino;
+        		placed[isCurrentTurnTheLastInGame()&&!isCurrentPlayerTheLastInTurn()] -> /{} Ongoing.PreplacingDomino;   		
+        		exit/{calculatePlayerScore();}
+        	}
+			DiscardingDomino{
+        		discarded[isCurrentTurnTheLastInGame()&&isCurrentPlayerTheLastInTurn()] -> /{} Over;
+        		discarded[!isCurrentTurnTheLastInGame()] -> /{} Ongoing.SelectingDomino;
+        		discarded[isCurrentTurnTheLastInGame()&&!isCurrentPlayerTheLastInTurn()] -> /{} Ongoing.PreplacingDomino;   	
+        		exit/{calculatePlayerScore();}  	
+        	}
+        	SelectingDomino{
+        		selected[!isSelectionValid()] -> Ongoing.SelectingDomino;
+        		selected[isCurrentPlayerTheLastInTurn()] -> /{} Ongoing.CreatingNextDraft;
+        		selected[!isCurrentPlayerTheLastInTurn()] -> /{setNextPlayer();} Ongoing.PreplacingDomino;
+        	} 
+        }
+       Over{
+       		entry/{calculateRanking();}
+       }
+    }
+
+
+
+    /*
+     * Setter for test setup
+     */
+
+
+   public void setGamestatus(String status) {
+		switch (status) {
+		case "CreatingFirstDraft":
+			gamestatus = Gamestatus.Initializing;
+			gamestatusInitializing = GamestatusInitializing.CreatingFirstDraft;
+			break;
+		case "SelectingFirstDomino":
+			gamestatus = Gamestatus.Initializing;
+			gamestatusInitializing = GamestatusInitializing.SelectingFirstDomino;
+			break;
+		case "CreatingNextDraft":
+			gamestatus = Gamestatus.Ongoing;
+			gamestatusOngoing = GamestatusOngoing.CreatingNextDraft;
+			gamestatusInitializing = GamestatusInitializing.Null;
+			break;
+		case "PreplacingDomino":
+			gamestatus = Gamestatus.Ongoing;
+			gamestatusOngoing = GamestatusOngoing.PreplacingDomino;
+			gamestatusInitializing = GamestatusInitializing.Null;
+			break;
+		case "PlacingDomino":
+			gamestatus = Gamestatus.Ongoing;
+			gamestatusOngoing = GamestatusOngoing.PlacingDomino;
+			gamestatusInitializing = GamestatusInitializing.Null;
+			break;
+		case "DiscardingDomino":
+			gamestatus = Gamestatus.Ongoing;
+			gamestatusOngoing = GamestatusOngoing.DiscardingDomino;
+			gamestatusInitializing = GamestatusInitializing.Null;
+			break;
+		case "SelectingDomino":
+			gamestatus = Gamestatus.Ongoing;
+			gamestatusOngoing = GamestatusOngoing.SelectingDomino;
+			gamestatusInitializing = GamestatusInitializing.Null;
+			break;
+		case "Over":
+			gamestatus = Gamestatus.Over;
+		default:
+			throw new RuntimeException("Invalid gamestatus string was provided: " + status);
+		}
+	}
+
+
+	/**
+	 * 
+	 * 
+	 * Guards line 101 "../../../../../Gameplay.ump" line 100
+	 * "../../../../../Gameplay.ump"
+	 */
+	// line 100 "../../../../../Gameplay.ump"
+	public boolean isCurrentPlayerTheLastInTurn() {
+		Kingdomino kingdomino = KingdominoApplication.getKingdomino();
+		Game game = kingdomino.getCurrentGame();
+		int numberOfPlayers = game.getPlayers().size();
+		Draft draft = game.getCurrentDraft();
+		if (getGamestatus().equals(Gamestatus.Ongoing)) {
+			draft = game.getNextDraft();
+		}
+		return draft.getSelections().size() == numberOfPlayers;
+	}
+
+	/**
+	 * 
+	 * line 109 "../../../../../Gameplay.ump" line 112 "../../../../../Gameplay.ump"
+	 */
+	// line 115 "../../../../../Gameplay.ump"
+	public boolean isCurrentTurnTheLastInGame() {
+		Kingdomino kingdomino = KingdominoApplication.getKingdomino();
+		Game game = kingdomino.getCurrentGame();
+		Draft draft = game.getCurrentDraft();
+		int numberOfDrafts = game.getAllDrafts().size();
+		if (game.getAllDrafts().get(numberOfDrafts - 1).equals(draft))
+			return true;
+		else
+			return false;
+	}
+
+	/**
+	 * 
+	 * 
+	 * You may need to add more guards here line 121 "../../../../../Gameplay.ump"
+	 * line 127 "../../../../../Gameplay.ump"
+	 */
+	// line 131 "../../../../../Gameplay.ump"
+	public boolean isThereAValidPlacement() {
+		Kingdomino kingdomino = KingdominoApplication.getKingdomino();
+		Game game = kingdomino.getCurrentGame();
+		Kingdom kingdom = game.getNextPlayer().getKingdom();
+		if (kingdom.getTerritory(kingdom.numberOfTerritories() - 1) instanceof Castle) {
+			return true;
+		}
+		DominoInKingdom lastPlacement = KingdominoController.getLastDomino();
+		if (KingdominoController.discardDomino(lastPlacement.getDomino()))
+			return false;
+		else
+			return true;
+	}
+
+	/**
+	 * 
+	 * line 130 "../../../../../Gameplay.ump" line 142 "../../../../../Gameplay.ump"
+	 */
+	// line 149 "../../../../../Gameplay.ump"
+	public boolean isSelectionValid() {
+		Kingdomino kingdomino = KingdominoApplication.getKingdomino();
+		Game game = kingdomino.getCurrentGame();
+		Draft draft = game.getNextDraft();
+		if (getGamestatus().equals(Gamestatus.Initializing)) {
+			draft = game.getCurrentDraft();
+		}
+		for (DominoSelection selection : draft.getSelections()) {
+			if (selection.getPlayer().equals(game.getNextPlayer())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+
+	public void shuffleDominoPile() {
+		try {
+			if (KingdominoApplication.getKingdomino().getCurrentGame().getNumberOfPlayers() == 2) {
+				KingdominoController.shuffleDominos(KingdominoApplication.getKingdomino().getCurrentGame(),
+						KingdominoController.generateRandomOrder(2));
+			}
+
+			if (KingdominoApplication.getKingdomino().getCurrentGame().getNumberOfPlayers() == 3) {
+				KingdominoController.shuffleDominos(KingdominoApplication.getKingdomino().getCurrentGame(),
+						KingdominoController.generateRandomOrder(3));
+			}
+
+			if (KingdominoApplication.getKingdomino().getCurrentGame().getNumberOfPlayers() == 4) {
+				KingdominoController.shuffleDominos(KingdominoApplication.getKingdomino().getCurrentGame(),
+						KingdominoController.generateRandomOrder(4));
+			}
+			KingdominoController.initiateDrafts(KingdominoApplication.getKingdomino().getCurrentGame(), 1);
+		} catch (InvalidInputException e) {
+			System.out.println("Fail to shuffle the dominoes with provided order and number of players!");
+		}
+	}
+
+
+	public void generateInitialPlayerOrder() {
+		Game game = KingdominoApplication.getKingdomino().getCurrentGame();
+		ArrayList<Integer> playerList = new ArrayList<>();
+
+		for (int i = 0; i < game.getNumberOfPlayers(); i++) {
+			playerList.add(i);
+		}
+		Collections.shuffle(playerList);
+		KingdominoController.initialorder = playerList;
+		KingdominoController.nextorder = 0;
+		game.setNextPlayer(game.getPlayer(playerList.get(0)));
+		KingdominoController.nextUI();
+		KingdominoController.nextorder++;
+	}
+
+
+	public void generateNextPlayerOrder() {
+		Game game = KingdominoApplication.getKingdomino().getCurrentGame();
+		ArrayList<Integer> order = new ArrayList<Integer>();
+		for (int i = 0; i < game.getCurrentDraft().numberOfIdSortedDominos(); i++) {
+			for (DominoSelection selection : game.getCurrentDraft().getSelections()) {
+				if (selection.getDomino().equals(game.getCurrentDraft().getIdSortedDomino(i))) {
+					Player player = selection.getPlayer();
+					int index = game.indexOfPlayer(player);
+					order.add(index);
+				}
+			}
+		}
+		KingdominoController.initialorder = order;
+		KingdominoController.nextorder = 0;
+		game.setNextPlayer(game.getPlayer(order.get(0)));
+		KingdominoController.initialorder.get(0);
+		KingdominoController.nextUI();
+		KingdominoController.nextorder++;
+	}
+
+
+	public void createNextDraft() {
+		KingdominoController.createNextDraft();
+	}
+
+
+	public void orderNextDraft() {
+		Kingdomino kingdomino = KingdominoApplication.getKingdomino();
+		KingdominoController.order(kingdomino.getCurrentGame().getNextDraft());
+		KingdominoController.orderDraftUI();
+	}
+
+
+	public void revealNextDraft() {
+		Kingdomino kingdomino = KingdominoApplication.getKingdomino();
+		KingdominoController.reveal(kingdomino.getCurrentGame().getNextDraft());
+		KingdominoController.revealDraftUI();
+	}
+
+
+	public void placeDomino(DominoInKingdom dominoToPlace, Player player) {
+		KingdominoController.placeSelectedDomino(dominoToPlace, player);
+	}
+
+
+	public void calculatePlayerScore() {
+		Player player = KingdominoApplication.getKingdomino().getCurrentGame().getNextPlayer();
+		KingdominoController.identifyProperty(player.getKingdom());
+		KingdominoController.calculatePlayerScore(player);
+	}
+
+
+	public ArrayList<ArrayList<Player>> calculateRanking() {
+		Game game = KingdominoApplication.getKingdomino().getCurrentGame();
+		return KingdominoController.calculateRanking(game);
+		KingdominoController.switchState();
+	}
+
+
+	public void setNextPlayer() {
+		Game game = KingdominoApplication.getKingdomino().getCurrentGame();
+		game.setNextPlayer(game.getPlayer(KingdominoController.initialorder.get(KingdominoController.nextorder)));
+		KingdominoController.nextUI();
+		KingdominoController.nextorder = KingdominoController.nextorder + 1;
+	}
+
+	
+}
